@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat App</title>
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-app.js"></script>
+
+    <!-- Include Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.0.2/firebase-database.js"></script>
+
+    <style>
+        /* Add some basic styling for the chat messages */
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages li {
+            padding: 5px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        input {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Simple Chat App</h2>
+    
+    <!-- Create a form to send messages -->
+    <form onsubmit="return sendMessage();">
+        <input type="text" id="message" placeholder="Enter your message" autocomplete="off">
+        <input type="submit" value="Send">
+    </form>
+
+    <!-- Create a list to display messages -->
+    <ul id="messages"></ul>
+
+    <script>
+        var firebaseConfig = {
+        apiKey: "AIzaSyBe3i9MQxEsaMW8SxRhuZXvjouyMQjgh3A",
+        authDomain: "chat-f28d1.firebaseapp.com",
+        projectId: "chat-f28d1",
+        storageBucket: "chat-f28d1.appspot.com",
+        messagingSenderId: "739063027245",
+        appId: "1:739063027245:web:c3ceb4963b0b5151ef4aa4"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        var myName = prompt("Enter your name");
+
+        function sendMessage() {
+            var messageInput = document.getElementById("message");
+            var message = messageInput.value.trim();
+
+            if (message !== "") {
+                // Save message in the database
+                firebase.database().ref("messages").push().set({
+                    "sender": myName,
+                    "message": message
+                });
+
+                // Clear the input field
+                messageInput.value = "";
+            }
+
+            // Prevent form from submitting
+            return false;
+        }
+
+        firebase.database().ref("messages").on("child_added", function (snapshot) {
+            displayMessage(snapshot);
+        });
+
+        firebase.database().ref("messages").on("child_removed", function (snapshot) {
+            var messageElement = document.getElementById("message-" + snapshot.key);
+            if (messageElement) {
+                messageElement.innerHTML = "This message has been removed";
+            }
+        });
+
+        function displayMessage(snapshot) {
+            var html = "<li id='message-" + snapshot.key + "'>";
+            if (snapshot.val().sender == myName) {
+                html += "<button data-id='" + snapshot.key + "' onclick='deleteMessage(this);'>Delete</button>";
+            }
+            html += snapshot.val().sender + ": " + snapshot.val().message;
+            html += "</li>";
+
+            document.getElementById("messages").innerHTML += html;
+        }
+
+        function deleteMessage(button) {
+            var messageId = button.getAttribute("data-id");
+
+            // Delete message
+            firebase.database().ref("messages").child(messageId).remove();
+        }
+    </script>
+</body>
+</html>
